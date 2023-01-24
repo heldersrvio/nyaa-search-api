@@ -1,0 +1,10 @@
+[package]
+name = "nyaa-search-api"
+version = "0.1.0"
+authors = ["helder"]
+edition = "2018"
+
+[dependencies]
+chrono = "0.4.23"
+gotham = "0.7.1"
+reqwest = "0.11.14"
