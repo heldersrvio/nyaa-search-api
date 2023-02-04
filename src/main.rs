@@ -1,25 +1,29 @@
-//! A Hello World example application for working with Gotham.
+use reqwest::StatusCode;
+use scraper::{Html, Selector};
 
-mod service;
-mod model;
+mod models;
+mod utils;
 
-use gotham::state::State;
+#[tokio::main]
+async fn main() {
+    let client = utils::get_client();
+    let domain_name = "nyaa.si";
+    let query_string = "?f=0&c=0_0&q=dungeon";
+    let url = format!("https://{}{}", domain_name, query_string);
+    let result = client.get(url).send().await.unwrap();
 
-const HELLO_WORLD: &str = "Hello World!";
+    let html = match result.status() {
+        StatusCode::OK => result.text().await.unwrap(),
+        _ => panic!("Something went wrong"),
+    };
 
-/// Create a `Handler` which is invoked when responding to a `Request`.
-///
-/// How does a function become a `Handler`?.
-/// We've simply implemented the `Handler` trait, for functions that match the signature used here,
-/// within Gotham itself.
-pub fn say_hello(state: State) -> (State, &'static str) {
-    (state, HELLO_WORLD)
-}
+    let document = Html::parse_document(&html);
+    // let result_selector = Selector::parse("tr").unwrap();
+    let category_selector = Selector::parse("img.category-icon").unwrap();
 
-/// Start a server and call the `Handler` we've defined above for each `Request` we receive.
-pub fn main() {
-    let addr = "127.0.0.1:7878";
-    println!("Listening for requests at http://{}", addr);
-    gotham::start(addr, || Ok(say_hello));
+    for element in document.select(&category_selector) {
+        let category = element.value().attr("alt");
+        println!("{:?}", category);
+    }
 }
 
